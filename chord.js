@@ -79,7 +79,11 @@ function printarLista () {
         console.log('Node: ', atual.id)
         console.log('Prox: ', atual.prox.id)
         console.log('Ativo: ', atual.ativo)
+        if (atual.ativo) {
+            console.log('ARQUIVOS NODOS FILHOS', atual.listaNodosFilhos)
+        }
         console.log('Arquivos: ', atual.arquivos)
+        
         console.log('Responsabilidade: ', atual.responsabilidade)
 
         pos++;
@@ -98,11 +102,15 @@ function setResponsabilidade () {
         if (atual.ativo) {
             let auxAtivo = atual;
 
-
+            const hash = new Map();
             do  {
+                for (const arquivo of auxAtivo.arquivos) {
+                    hash.set(arquivo, auxAtivo.id)
+                }
                 auxAtivo = auxAtivo.anterior;
                 if (auxAtivo.ativo) {
                     atual.responsabilidade = auxAtivo.id;
+                    atual.listaNodosFilhos = hash;
                 }
             } while (!auxAtivo.ativo)
 
@@ -205,49 +213,36 @@ function responsavelPeloNodo(emQualNodoEleEsta) {
     }
 }
 
-function getFile (nodoResponsavel, nomeArquivo) {
+function getFile (nomeArquivo) {
 
     let atual = inicio;
-
+    let count = 0;
+    let encontrado = false;
     for(;;) {
-
-        if (atual.id === nodoResponsavel) {
+        if (count>16) break;
+        if (atual.ativo) {
             let aux = atual;
-            const responsavelAte = aux.responsabilidade;
-            
-            let endloop = false;
-            let arquivo = null;
-            do {
-                arquivo = aux.arquivos.find(arq => arq === nomeArquivo)
-
-                if (arquivo) {
-                    endloop = true
-                } else {
-                    aux = aux.anterior;
-                    if (aux.id === responsavelAte) {
-                        endloop = true;
-                    }
-                }
-
-            } while(!endloop)
-
-            if (arquivo) {
-                return arquivo;
-            } else {
-                return console.log('Arquivo', nomeArquivo, 'não encontrado')
+            const estaNesseNodo = atual.listaNodosFilhos.get(nomeArquivo);
+            if (estaNesseNodo) {
+                return console.log('Arquivo', nomeArquivo, 'encontrado no nodo', estaNesseNodo, ' através do nodo ativo', aux.id )
             }
         }
 
         atual = atual.prox;
+        count ++;
+    }
+
+    if (!encontrado) {
+        return console.log('Arquivo', nomeArquivo, 'não encontrado')
     }
 
 }
 
 function pesquisarArquivo (nomeArquivo) {
-    const emQualNodoEleEsta = hashFunction(nomeArquivo);
-    const nodoResponsavel = responsavelPeloNodo(emQualNodoEleEsta);
+    // const emQualNodoEleEsta = hashFunction(nomeArquivo);
+    // const nodoResponsavel = responsavelPeloNodo(emQualNodoEleEsta);
 
-    const arquivo = getFile(nodoResponsavel, nomeArquivo) 
+    const arquivo = getFile(nomeArquivo); 
     return arquivo ? console.log('Arquivo encontrado', arquivo): null;
 }
 
@@ -261,7 +256,9 @@ inicializar();
 printarLista();
 
 addAtivo(7)
-removeAtivo(7)
+addAtivo(10)
+addAtivo(11)
+
 console.log('\n\n\n')
 pesquisarArquivo('gtasa.exe')
 pesquisarArquivo('afg.txt')
